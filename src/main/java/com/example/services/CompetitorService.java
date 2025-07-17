@@ -9,12 +9,9 @@ import com.example.PersistenceManager;
 import com.example.models.Competitor;
 import com.example.models.CompetitorDTO;
 
-import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.persistence.TypedQuery;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -23,11 +20,12 @@ import javax.ws.rs.core.Response;
 
 import org.json.simple.JSONObject;
 
+import java.util.List;
+
 @Path("/competitors")
 @Produces(MediaType.APPLICATION_JSON)
 public class CompetitorService {
 
-    @PersistenceContext(unitName = "AplicacionMundialPU")
     EntityManager entityManager;
 
     @PostConstruct
@@ -43,16 +41,20 @@ public class CompetitorService {
         }
     }
 
-    // Obtener todos los competidores
     @GET
     public Response getAll() {
         try {
             Query q = entityManager.createQuery("SELECT u FROM Competitor u ORDER BY u.surname ASC");
             List<Competitor> competitors = q.getResultList();
+
+            System.out.println("Entrando al método getAll()");
+            System.out.println("EntityManager abierto: " + entityManager.isOpen());
+
             return Response.status(200)
                     .header("Access-Control-Allow-Origin", "*")
                     .entity(competitors)
                     .build();
+
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(500)
@@ -61,7 +63,6 @@ public class CompetitorService {
         }
     }
 
-    // Crear nuevo competidor
     @POST
     public Response createCompetitor(CompetitorDTO competitor) {
         Competitor c = new Competitor();
@@ -76,7 +77,11 @@ public class CompetitorService {
         c.setSurname(competitor.getSurname());
         c.setTelephone(competitor.getTelephone());
         c.setVehicle(competitor.getVehicle());
-        c.setProducto(competitor.getProducto()); // si CompetitorDTO tiene el producto
+        c.setProducto(competitor.getProducto());
+
+        // NUEVO: Setear email y password si los tiene
+        c.setEmail(competitor.getEmail());
+        c.setPassword(competitor.getPassword());
 
         try {
             entityManager.getTransaction().begin();
@@ -101,27 +106,31 @@ public class CompetitorService {
                 .build();
     }
 
-    // Crear competidor con vehículo
     @POST
     @Path("/vehicle")
     public Response createCompetitorWithVehicle(CompetitorDTO competitor) {
-        return createCompetitor(competitor); // usa misma lógica del POST general
+        return createCompetitor(competitor); // Reutiliza el método anterior
     }
 
-    // Obtener competidores por nombre exacto
-   @GET
-@Path("{name}")
-@Produces(MediaType.APPLICATION_JSON)
-public Response getCompetitorsByName(@PathParam("name") String name) {
- TypedQuery<Competitor> query = (TypedQuery<Competitor>) 
-entityManager.createQuery("SELECT c FROM Competitor c WHERE c.name = :name");
- List<Competitor> competitors =query.setParameter("name", name).getResultList();
- return Response.status(200).header("Access-Control-Allow-Origin", 
-"*").entity(competitors).build();
-}
+    @GET
+    @Path("{name}")
+    public Response getCompetitorsByName(@PathParam("name") String name) {
+        try {
+            Query q = entityManager.createQuery("SELECT c FROM Competitor c WHERE c.name = :name");
+            q.setParameter("name", name);
+            List<Competitor> competitors = q.getResultList();
+            return Response.status(200)
+                    .header("Access-Control-Allow-Origin", "*")
+                    .entity(competitors)
+                    .build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(500)
+                    .entity("{\"error\": \"Error al buscar competidores por nombre.\"}")
+                    .build();
+        }
+    }
 
-
-    // Obtener nombres de competidores que comienzan por la letra A
     @GET
     @Path("/startswith/a")
     public Response getCompetitorsStartingWithA() {
@@ -142,7 +151,6 @@ entityManager.createQuery("SELECT c FROM Competitor c WHERE c.name = :name");
         }
     }
 
-    // Soporte para CORS
     @OPTIONS
     public Response cors(@Context HttpHeaders requestHeaders) {
         return Response.status(200)
@@ -150,5 +158,42 @@ entityManager.createQuery("SELECT c FROM Competitor c WHERE c.name = :name");
                 .header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
                 .header("Access-Control-Allow-Headers", "AUTHORIZATION, content-type, accept")
                 .build();
+
     }
+
+    @POST
+    @Path("/login")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response login(CompetitorDTO credentials) {
+        try {
+            Query q = entityManager.createQuery(
+                    "SELECT c FROM Competitor c WHERE c.email = :email AND c.password = :password");
+            q.setParameter("email", credentials.getEmail());
+            q.setParameter("password", credentials.getPassword());
+
+            List<Competitor> result = q.getResultList();
+
+            if (result.isEmpty()) {
+                return Response.status(401)
+                        .header("Access-Control-Allow-Origin", "*")
+                        .entity("{\"error\": \"Credenciales inválidas\"}")
+                        .build();
+            }
+
+            Competitor c = result.get(0);
+            return Response.status(200)
+                    .header("Access-Control-Allow-Origin", "*")
+                    .entity(c)
+                    .build();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(500)
+                    .header("Access-Control-Allow-Origin", "*")
+                    .entity("{\"error\": \"Error interno al realizar login.\"}")
+                    .build();
+        }
+    }
+
 }

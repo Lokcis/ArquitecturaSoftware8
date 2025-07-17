@@ -5,60 +5,55 @@
  */
 package com.example.models;
 
-import com.sun.istack.NotNull;
 import java.io.Serializable;
-import java.util.Calendar;
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.xml.bind.annotation.XmlRootElement;
-import org.eclipse.persistence.nosql.annotations.DataFormatType;
-import org.eclipse.persistence.nosql.annotations.NoSql;
+import javax.persistence.*;
 
-@NoSql(dataFormat=DataFormatType.MAPPED)
-@Embeddable
-@XmlRootElement
+@Entity
+@Table(name = "vehicle") // Nombre de la tabla en la base de datos
 public class Vehicle implements Serializable {
-private String plate;
-private String brand;
-private int modelYear;
- @NotNull
- @Column(name = "create_at", updatable = false)
- @Temporal(TemporalType.DATE)
- private Calendar createdAt;
- @NotNull
- @Column(name = "updated_at")
- @Temporal(TemporalType.DATE)
- private Calendar updatedAt;
-public Vehicle(){
-}
- @PreUpdate
- private void updateTimestamp() {
- this.updatedAt = Calendar.getInstance();
- }
- @PrePersist
- private void creationTimestamp() {
- this.createdAt = this.updatedAt = Calendar.getInstance();
- }
-public String getPlate() {
-return plate;
-}
-public void setPlate(String plate) {
-this.plate = plate;
-}
-public String getBrand() {
-return brand;
-}
-public void setBrand(String brand) {
-this.brand = brand;
-}
-public int getModelYear() {
-return modelYear;
-}
-public void setModelYear(int modelYear) {
-this.modelYear = modelYear;
-}
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String marca;
+    private String modelo;
+    private String placa;
+
+    public Vehicle() {
+        // Constructor vacío requerido por JPA
+    }
+
+    // --- Getters y Setters ---
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getMarca() {
+        return marca;
+    }
+
+    public void setMarca(String marca) {
+        this.marca = marca;
+    }
+
+    public String getModelo() {
+        return modelo;
+    }
+
+    public void setModelo(String modelo) {
+        this.modelo = modelo;
+    }
+
+    public String getPlaca() {
+        return placa;
+    }
+
+    public void setPlaca(String placa) {
+        this.placa = placa;
+    }
 }

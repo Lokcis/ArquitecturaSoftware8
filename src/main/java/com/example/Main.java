@@ -1,14 +1,12 @@
 package com.example;
 
-import javax.persistence.EntityManager;
-
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 /**
  *
- * This class launches the web application in an embedded Jetty container.
- * This is the entry point to your application. The Java command that is used for
+ * This class launches the web application in an embedded Jetty container. This
+ * is the entry point to your application. The Java command that is used for
  * launching should fire this main method.
  *
  */
@@ -17,7 +15,7 @@ public class Main {
     /**
      * @param args
      */
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) throws Exception {
         String webappDirLocation = "src/main/webapp/";
 
         // The port that we should run on can be set into an environment variable
@@ -33,7 +31,7 @@ public class Main {
         root.setContextPath("/");
         root.setDescriptor(webappDirLocation + "/WEB-INF/web.xml");
         root.setResourceBase(webappDirLocation);
-        
+
         PersistenceManager.getInstance().getEntityManagerFactory();
 
         // Parent loader priority is a class loader setting that Jetty accepts.
